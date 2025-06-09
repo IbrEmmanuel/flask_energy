@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Energy Monitoring System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .unit {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            z-index: 50;
+        }
+        .connected {
+            background-color: #10B981;
+            color: white;
+        }
+        .disconnected {
+            background-color: #EF4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    <div id="connectionStatus" class="connection-status disconnected">
+        ESP32 Disconnected
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-2 text-gray-800">Solar Energy Monitoring</h1>
+        <p class="text-center text-gray-600 mb-8">Real-time monitoring of solar, battery, and load parameters</p>
+        
+        <!-- Solar Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Solar Input</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Voltage</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-blue-600" id="solarVoltage">--</span>
+                        <span class="unit ml-2">V DC</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Current</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-green-600" id="solarCurrent">--</span>
+                        <span class="unit ml-2">A</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Power</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-purple-600" id="solarPower">--</span>
+                        <span class="unit ml-2">W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battery Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Battery Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Voltage</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-yellow-600" id="batteryVoltage">--</span>
+                        <span class="unit ml-2">V DC</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Current</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-yellow-600" id="batteryCurrent">--</span>
+                        <span class="unit ml-2">A</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Power</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-yellow-600" id="batteryPower">--</span>
+                        <span class="unit ml-2">W</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Total Energy</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-yellow-600" id="batteryWh">--</span>
+                        <span class="unit ml-2">Wh</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Load Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Current</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-red-600" id="loadCurrent">--</span>
+                        <span class="unit ml-2">A</span>
+                    </div>
+                </div>
+                <div class="card rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-200">
+                    <h3 class="text-lg font-medium text-gray-600 mb-2">Power</h3>
+                    <div class="flex items-baseline">
+                        <span class="value text-red-600" id="loadPower">--</span>
+                        <span class="unit ml-2">W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Power Distribution</h3>
+                <canvas id="powerChart"></canvas>
+            </div>
+            <div class="card rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">Battery Energy</h3>
+                <canvas id="batteryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        const powerChart = new Chart(document.getElementById('powerChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Solar Power (W)',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    tension: 0.4
+                }, {
+                    label: 'Battery Power (W)',
+                    data: [],
+                    borderColor: 'rgb(234, 179, 8)',
+                    tension: 0.4
+                }, {
+                    label: 'Load Power (W)',
+                    data: [],
+                    borderColor: 'rgb(239, 68, 68)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Power (W)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const batteryChart = new Chart(document.getElementById('batteryChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Battery Energy (Wh)',
+                    data: [],
+                    borderColor: 'rgb(234, 179, 8)',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(234, 179, 8, 0.1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Energy (Wh)'
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateConnectionStatus(isConnected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (isConnected) {
+                statusElement.textContent = 'ESP32 Connected';
+                statusElement.classList.remove('disconnected');
+                statusElement.classList.add('connected');
+            } else {
+                statusElement.textContent = 'ESP32 Disconnected';
+                statusElement.classList.remove('connected');
+                statusElement.classList.add('disconnected');
+            }
+        }
+
+        function updateDashboard(data) {
+            if (!data) return;
+
+            // Update solar values
+            document.getElementById('solarVoltage').textContent = data.solar_voltage.toFixed(2);
+            document.getElementById('solarCurrent').textContent = data.solar_current.toFixed(2);
+            document.getElementById('solarPower').textContent = data.solar_power.toFixed(2);
+
+            // Update battery values
+            document.getElementById('batteryVoltage').textContent = data.battery_voltage.toFixed(2);
+            document.getElementById('batteryCurrent').textContent = data.battery_current.toFixed(2);
+            document.getElementById('batteryPower').textContent = data.battery_power.toFixed(2);
+            document.getElementById('batteryWh').textContent = data.battery_wh.toFixed(2);
+
+            // Update load values
+            document.getElementById('loadCurrent').textContent = data.load_current.toFixed(2);
+            document.getElementById('loadPower').textContent = data.load_power.toFixed(2);
+
+            // Update charts
+            const timestamp = new Date(data.timestamp).toLocaleTimeString();
+            
+            // Update power chart
+            powerChart.data.labels.push(timestamp);
+            powerChart.data.datasets[0].data.push(data.solar_power);
+            powerChart.data.datasets[1].data.push(data.battery_power);
+            powerChart.data.datasets[2].data.push(data.load_power);
+
+            // Update battery chart
+            batteryChart.data.labels.push(timestamp);
+            batteryChart.data.datasets[0].data.push(data.battery_wh);
+
+            // Keep only last 20 data points
+            if (powerChart.data.labels.length > 20) {
+                powerChart.data.labels.shift();
+                powerChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            if (batteryChart.data.labels.length > 20) {
+                batteryChart.data.labels.shift();
+                batteryChart.data.datasets[0].data.shift();
+            }
+
+            powerChart.update();
+            batteryChart.update();
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/energy?limit=1');
+                const result = await response.json();
+                
+                updateConnectionStatus(result.is_connected);
+                
+                if (result.status === 'success' && result.data) {
+                    updateDashboard(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        // Fetch data every 5 seconds
+        setInterval(fetchData, 5000);
+        fetchData(); // Initial fetch
+    </script>
+</body>
+</html> 
